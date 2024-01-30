@@ -31,7 +31,7 @@ export default class MyPlugin extends Plugin {
 			"Git commit",
 			(evt: MouseEvent) => {
 				// Called when the user clicks the icon.
-				new SampleModal(this.app).open();
+				new GitCommitModal(this.app).open();
 			}
 		);
 		// Perform additional things with the ribbon
@@ -117,6 +117,44 @@ class SampleModal extends Modal {
 	onClose() {
 		const { contentEl } = this;
 		contentEl.empty();
+	}
+}
+
+class GitCommitModal extends Modal {
+	msg: string;
+	commit: boolean = false;
+
+	constructor(app: App) {
+		super(app);
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+
+		contentEl.createEl("h1", { text: "Git commit" });
+
+		new Setting(contentEl)
+			.setName("Message")
+			.addTextArea((text) =>
+				text.onChange((value) => (this.msg = value))
+			);
+
+		new Setting(contentEl).addButton((btn) =>
+			btn.setButtonText("Commit").onClick(() => {
+				if (this.msg) {
+					this.commit = true;
+					this.close();
+				}
+			})
+		);
+	}
+
+	onClose() {
+		let { contentEl } = this;
+		contentEl.empty();
+		if (this.commit) {
+			new Notice(`Committed "${this.msg}"`);
+		}
 	}
 }
 
