@@ -1,6 +1,7 @@
 import {
 	App,
 	Editor,
+	FileSystemAdapter,
 	MarkdownView,
 	Modal,
 	Notice,
@@ -9,7 +10,7 @@ import {
 	Setting,
 } from "obsidian";
 
-// Remember to rename these classes and interfaces!
+import simpleGit, { SimpleGit, SimpleGitOptions } from "simple-git";
 
 interface MyPluginSettings {
 	gitRepository: string | null;
@@ -58,13 +59,23 @@ export default class MyPlugin extends Plugin {
 		// 		editor.replaceSelection("Sample Editor Command");
 		// 	},
 		// });
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
+
+		// Command to init repo
 		this.addCommand({
 			id: "git-init",
 			name: "Init git repository",
 			checkCallback: (checking: boolean) => {
 				if (!this.settings.gitRepository) {
 					if (!checking) {
+						if (git.get() === null) {
+							git.set(
+								simpleGit(
+									getVaultPath(this.app),
+									DEFAULT_GIT_OPTIONS
+								)
+							);
+						}
+						git.get()!.init();
 						new Notice("Git repository has been init");
 						// new SampleModal(this.app).open();
 					}
@@ -126,6 +137,9 @@ class GitCommitModal extends Modal {
 
 	constructor(app: App) {
 		super(app);
+		if (git.get() === null) {
+			git.set(simpleGit(getVaultPath(this.app), DEFAULT_GIT_OPTIONS));
+		}
 	}
 
 	onOpen() {
@@ -153,7 +167,12 @@ class GitCommitModal extends Modal {
 		let { contentEl } = this;
 		contentEl.empty();
 		if (this.commit) {
-			new Notice(`Committed "${this.msg}"`);
+			git.get()!
+				.add("*")
+				.commit(this.msg)
+				.then(() => {
+					new Notice(`Committed "${this.msg}"`);
+				});
 		}
 	}
 }
@@ -191,3 +210,26 @@ class SettingTab extends PluginSettingTab {
 			);
 	}
 }
+
+const DEFAULT_GIT_OPTIONS: Partial<SimpleGitOptions> = {
+	binary: "git",
+	trimmed: true,
+};
+
+class Git {
+	private instance: SimpleGit | null = null;
+
+	set(instance: SimpleGit): void {
+		this.instance = instance;
+	}
+
+	get(): SimpleGit | null {
+		return this.instance;
+	}
+}
+
+const git: Git = new Git();
+
+const getVaultPath = (app: App): string => {
+	return (app.vault.adapter as FileSystemAdapter).getBasePath();
+};
