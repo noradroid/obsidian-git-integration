@@ -67,17 +67,12 @@ export default class MyPlugin extends Plugin {
 			checkCallback: (checking: boolean) => {
 				if (!this.settings.gitRepository) {
 					if (!checking) {
-						if (git.get() === null) {
-							git.set(
-								simpleGit(
-									getVaultPath(this.app),
-									DEFAULT_GIT_OPTIONS
-								)
-							);
-						}
+						git.setup(this.app);
 						git.get()!.init();
-						new Notice("Git repository has been init");
-						// new SampleModal(this.app).open();
+
+						new GitInitModal(this.app, (repo: string) => {
+							this.settings.gitRepository = repo;
+						}).open();
 					}
 
 					return true;
@@ -131,15 +126,57 @@ class SampleModal extends Modal {
 	}
 }
 
+class GitInitModal extends Modal {
+	repo: string;
+	addRemote: boolean = false;
+	onCompleteCallback: (repo: string) => any;
+
+	constructor(app: App, onCompleteCallback: (repo: string) => any) {
+		super(app);
+		git.setup(app);
+		this.onCompleteCallback = onCompleteCallback;
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+
+		contentEl.createEl("h1", { text: "Git init" });
+
+		new Setting(contentEl)
+			.setName("Git repo url")
+			.addText((text) => text.onChange((value) => (this.repo = value)));
+
+		new Setting(contentEl).addButton((btn) =>
+			btn.setButtonText("Initialize").onClick(() => {
+				if (this.repo) {
+					this.addRemote = true;
+					this.close();
+				}
+			})
+		);
+	}
+
+	onClose() {
+		let { contentEl } = this;
+		contentEl.empty();
+		if (this.addRemote) {
+			git.get()!
+				.addRemote("origin", this.repo)
+				.then(() => {
+					new Notice(`Added remote origin "${this.repo}"`);
+					this.onCompleteCallback(this.repo);
+				});
+		}
+	}
+}
+
 class GitCommitModal extends Modal {
 	msg: string;
 	commit: boolean = false;
 
 	constructor(app: App) {
 		super(app);
-		if (git.get() === null) {
-			git.set(simpleGit(getVaultPath(this.app), DEFAULT_GIT_OPTIONS));
-		}
+		git.setup(app);
 	}
 
 	onOpen() {
@@ -218,6 +255,12 @@ const DEFAULT_GIT_OPTIONS: Partial<SimpleGitOptions> = {
 
 class Git {
 	private instance: SimpleGit | null = null;
+
+	setup(app: App): void {
+		if (this.get() === null) {
+			git.set(simpleGit(getVaultPath(app), DEFAULT_GIT_OPTIONS));
+		}
+	}
 
 	set(instance: SimpleGit): void {
 		this.instance = instance;
