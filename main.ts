@@ -1,8 +1,6 @@
 import {
 	App,
-	Editor,
 	FileSystemAdapter,
-	MarkdownView,
 	Modal,
 	Notice,
 	Plugin,
@@ -12,44 +10,32 @@ import {
 
 import simpleGit, { SimpleGit, SimpleGitOptions } from "simple-git";
 
-interface MyPluginSettings {
+interface GitPluginSettings {
 	gitRepository: string | null;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
+const DEFAULT_SETTINGS: GitPluginSettings = {
 	gitRepository: null,
 };
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class GitPlugin extends Plugin {
+	settings: GitPluginSettings;
 
 	async onload() {
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon(
-			"git-compare-arrows",
-			"Git commit",
-			(evt: MouseEvent) => {
-				// Called when the user clicks the icon.
-				new GitCommitModal(this.app).open();
-			}
-		);
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass("my-plugin-ribbon-class");
+		this.addCommitRibbonIcon();
+
+		this.addPushRibbonIcon();
+
+		this.addInitCommmand();
+
+		this.addCommitCommand();
 
 		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
 		const statusBarItemEl = this.addStatusBarItem();
 		statusBarItemEl.setText("Git Integration Active");
 
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: "git-commit",
-			name: "Open git commit message modal",
-			callback: () => {
-				new SampleModal(this.app).open();
-			},
-		});
 		// // This adds an editor command that can perform some operation on the current editor instance
 		// this.addCommand({
 		// 	id: "sample-editor-command",
@@ -60,7 +46,56 @@ export default class MyPlugin extends Plugin {
 		// 	},
 		// });
 
-		// Command to init repo
+		// This adds a settings tab so the user can configure various aspects of the plugin
+		this.addSettingTab(new SettingTab(this.app, this));
+
+		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
+		// Using this function will automatically remove the event listener when this plugin is disabled.
+		this.registerDomEvent(document, "click", (evt: MouseEvent) => {
+			console.log("click", evt);
+		});
+
+		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
+		this.registerInterval(
+			window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000)
+		);
+	}
+
+	addCommitRibbonIcon(): void {
+		// This creates an icon in the left ribbon.
+		const ribbonIconEl = this.addRibbonIcon(
+			"git-commit-vertical",
+			"Git commit",
+			(evt: MouseEvent) => {
+				new GitCommitModal(this.app).open();
+			}
+		);
+		ribbonIconEl.addClass("my-plugin-ribbon-class");
+	}
+
+	addPushRibbonIcon(): void {
+		// This creates an icon in the left ribbon.
+		const ribbonIconEl = this.addRibbonIcon(
+			"git-compare-arrows",
+			"Git push",
+			(evt: MouseEvent) => {
+				new GitCommitModal(this.app).open();
+			}
+		);
+		ribbonIconEl.addClass("my-plugin-ribbon-class");
+	}
+
+	addCommitCommand(): void {
+		this.addCommand({
+			id: "git-commit",
+			name: "Open git commit message modal",
+			callback: () => {
+				new GitCommitModal(this.app).open();
+			},
+		});
+	}
+
+	addInitCommmand(): void {
 		this.addCommand({
 			id: "git-init",
 			name: "Init git repository",
@@ -79,20 +114,6 @@ export default class MyPlugin extends Plugin {
 				}
 			},
 		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, "click", (evt: MouseEvent) => {
-			console.log("click", evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(
-			window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000)
-		);
 	}
 
 	onunload() {}
@@ -107,22 +128,6 @@ export default class MyPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-}
-
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.setText("Woah!");
-	}
-
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
 	}
 }
 
@@ -215,9 +220,9 @@ class GitCommitModal extends Modal {
 }
 
 class SettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+	plugin: GitPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: GitPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
