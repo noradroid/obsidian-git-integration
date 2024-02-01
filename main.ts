@@ -22,11 +22,13 @@ export default class GitPlugin extends Plugin {
 	settings: GitPluginSettings;
 
 	async onload() {
+		git.setup(this.app);
+
 		await this.loadSettings();
 
 		this.addCommitRibbonIcon();
 
-		this.addPushRibbonIcon();
+		this.addSyncRibbonIcon();
 
 		this.addInitCommmand();
 
@@ -73,13 +75,13 @@ export default class GitPlugin extends Plugin {
 		ribbonIconEl.addClass("my-plugin-ribbon-class");
 	}
 
-	addPushRibbonIcon(): void {
+	addSyncRibbonIcon(): void {
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon(
 			"git-compare-arrows",
-			"Git push",
+			"Git sync",
 			(evt: MouseEvent) => {
-				new GitCommitModal(this.app).open();
+				new GitSyncModal(this.app).open();
 			}
 		);
 		ribbonIconEl.addClass("my-plugin-ribbon-class");
@@ -102,7 +104,6 @@ export default class GitPlugin extends Plugin {
 			checkCallback: (checking: boolean) => {
 				if (!this.settings.gitRepository) {
 					if (!checking) {
-						git.setup(this.app);
 						git.get()!.init();
 
 						new GitInitModal(this.app, (repo: string) => {
@@ -138,7 +139,6 @@ class GitInitModal extends Modal {
 
 	constructor(app: App, onCompleteCallback: (repo: string) => any) {
 		super(app);
-		git.setup(app);
 		this.onCompleteCallback = onCompleteCallback;
 	}
 
@@ -170,7 +170,8 @@ class GitInitModal extends Modal {
 				.then(() => {
 					new Notice(`Added remote origin "${this.repo}"`);
 					this.onCompleteCallback(this.repo);
-				});
+				})
+				.catch((err) => new Notice(err));
 		}
 	}
 }
@@ -181,7 +182,6 @@ class GitCommitModal extends Modal {
 
 	constructor(app: App) {
 		super(app);
-		git.setup(app);
 	}
 
 	onOpen() {
@@ -214,8 +214,56 @@ class GitCommitModal extends Modal {
 				.commit(this.msg)
 				.then(() => {
 					new Notice(`Committed "${this.msg}"`);
-				});
+				})
+				.catch((err) => new Notice(err));
 		}
+	}
+}
+
+class GitSyncModal extends Modal {
+	onCompleteCallback: (repo: string) => any;
+
+	constructor(app: App, onCompleteCallback?: (repo: string) => any) {
+		super(app);
+		// this.onCompleteCallback = onCompleteCallback;
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+
+		contentEl.createEl("h1", { text: "Git sync?" });
+
+		new Setting(contentEl)
+			.setHeading()
+			.setDesc(`This will sync with the remote branch.`)
+			.addButton((btn) =>
+				btn.setButtonText("Cancel").onClick(() => {
+					this.close();
+				})
+			)
+			.addButton((btn) => {
+				btn.setButtonText("Sync").onClick(() => {
+					git.get()!
+						.pull("origin", git.getBranch() ?? undefined)
+						.catch((err) => new Notice(`${err}`))
+						.finally(() => {
+							git.get()!
+								.push("origin", git.getBranch() ?? undefined, [
+									"--set-upstream",
+								])
+								.then(() => {
+									new Notice(`Synced with remote branch`);
+									this.close();
+								})
+								.catch((err) => new Notice(`${err}`));
+						});
+				});
+			});
+	}
+
+	onClose() {
+		let { contentEl } = this;
+		contentEl.empty();
 	}
 }
 
@@ -260,10 +308,14 @@ const DEFAULT_GIT_OPTIONS: Partial<SimpleGitOptions> = {
 
 class Git {
 	private instance: SimpleGit | null = null;
+	private branch: string | null;
 
 	setup(app: App): void {
 		if (this.get() === null) {
 			git.set(simpleGit(getVaultPath(app), DEFAULT_GIT_OPTIONS));
+			this.instance
+				?.status()
+				.then((status) => (this.branch = status.current));
 		}
 	}
 
@@ -273,6 +325,10 @@ class Git {
 
 	get(): SimpleGit | null {
 		return this.instance;
+	}
+
+	getBranch(): string | null {
+		return this.branch;
 	}
 }
 
