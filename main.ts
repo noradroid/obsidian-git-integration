@@ -30,7 +30,9 @@ export default class GitPlugin extends Plugin {
 
 		this.addSyncRibbonIcon();
 
-		this.addInitCommmand();
+		this.addInitCommand();
+
+		this.addSyncCommand();
 
 		this.addCommitCommand();
 
@@ -97,7 +99,17 @@ export default class GitPlugin extends Plugin {
 		});
 	}
 
-	addInitCommmand(): void {
+	addSyncCommand(): void {
+		this.addCommand({
+			id: "git-sync",
+			name: "Sync with remote git repository",
+			callback: () => {
+				new GitSyncModal(this.app).open();
+			},
+		});
+	}
+
+	addInitCommand(): void {
 		this.addCommand({
 			id: "git-init",
 			name: "Init git repository",
@@ -221,11 +233,8 @@ class GitCommitModal extends Modal {
 }
 
 class GitSyncModal extends Modal {
-	onCompleteCallback: (repo: string) => any;
-
-	constructor(app: App, onCompleteCallback?: (repo: string) => any) {
+	constructor(app: App) {
 		super(app);
-		// this.onCompleteCallback = onCompleteCallback;
 	}
 
 	onOpen() {
@@ -243,6 +252,7 @@ class GitSyncModal extends Modal {
 			)
 			.addButton((btn) => {
 				btn.setButtonText("Sync").onClick(() => {
+					// this sync will take a while
 					git.get()!
 						.pull("origin", git.getBranch() ?? undefined)
 						.catch((err) => new Notice(`${err}`))
