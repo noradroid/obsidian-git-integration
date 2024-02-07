@@ -6,3 +6,20 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+.setting-item-without-info {
+  border-top: none;
+  .setting-item-info {
+    margin-right: 0px;
+  }
+  .setting-item-control {
+    width: 100%;
+  }
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.font-medium {
+  font-size: var(--font-ui-medium);
+}

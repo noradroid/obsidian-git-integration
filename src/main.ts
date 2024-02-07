@@ -1,22 +1,11 @@
-import {
-	App,
-	FileSystemAdapter,
-	Modal,
-	Notice,
-	Plugin,
-	PluginSettingTab,
-	Setting,
-} from "obsidian";
-
-import simpleGit, { SimpleGit, SimpleGitOptions } from "simple-git";
-
-interface GitPluginSettings {
-	gitRepository: string | null;
-}
-
-const DEFAULT_SETTINGS: GitPluginSettings = {
-	gitRepository: null,
-};
+import { Plugin } from "obsidian";
+import { GitCommitModal } from "./components/git-commit.modal";
+import { GitInitModal } from "./components/git-init.modal";
+import { GitMenuModal } from "./components/git-menu.modal";
+import { GitSyncModal } from "./components/git-sync.modal";
+import { git } from "./config/git.config";
+import { DEFAULT_SETTINGS, GitPluginSettings } from "./config/settings.config";
+import { SettingsTab } from "./settings-tab";
 
 export default class GitPlugin extends Plugin {
 	settings: GitPluginSettings;
@@ -26,15 +15,17 @@ export default class GitPlugin extends Plugin {
 
 		await this.loadSettings();
 
-		this.addCommitRibbonIcon();
+		this.addMenuRibbonIcon();
 
-		this.addSyncRibbonIcon();
+		// this.addCommitRibbonIcon();
 
-		this.addInitCommand();
+		// this.addSyncRibbonIcon();
+
+		this.addOpenInitModalCommand();
 
 		this.addSyncCommand();
 
-		this.addCommitCommand();
+		this.addOpenCommitModalCommand();
 
 		this.addStatusBarIndication();
 
@@ -52,34 +43,73 @@ export default class GitPlugin extends Plugin {
 		);
 	}
 
-	addCommitRibbonIcon(): void {
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon(
-			"git-commit-vertical",
-			"Git commit",
-			(evt: MouseEvent) => {
-				new GitCommitModal(this.app).open();
-			}
-		);
-		ribbonIconEl.addClass("my-plugin-ribbon-class");
-	}
-
-	addSyncRibbonIcon(): void {
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon(
+	addMenuRibbonIcon(): void {
+		this.addRibbonIcon(
 			"git-compare-arrows",
-			"Git sync",
+			"Open git menu",
 			(evt: MouseEvent) => {
-				new GitSyncModal(this.app).open();
+				new GitMenuModal(this.app).open();
 			}
 		);
-		ribbonIconEl.addClass("my-plugin-ribbon-class");
 	}
 
-	addCommitCommand(): void {
+	// addCommitRibbonIcon(): void {
+	// 	const ribbonIconEl = this.addRibbonIcon(
+	// 		"git-commit-vertical",
+	// 		"Git commit",
+	// 		(evt: MouseEvent) => {
+	// 			new GitCommitModal(this.app).open();
+	// 		}
+	// 	);
+	// 	ribbonIconEl.addClass("my-plugin-ribbon-class");
+	// }
+
+	// addSyncRibbonIcon(): void {
+	// 	const ribbonIconEl = this.addRibbonIcon(
+	// 		"git-compare-arrows",
+	// 		"Git sync",
+	// 		(evt: MouseEvent) => {
+	// 			new GitSyncModal(this.app).open();
+	// 		}
+	// 	);
+	// 	ribbonIconEl.addClass("my-plugin-ribbon-class");
+	// }
+
+	addOpenMenuCommand(): void {
+		this.addCommand({
+			id: "git-menu",
+			name: "Open git menu",
+			callback: () => {
+				new GitMenuModal(this.app).open();
+			},
+		});
+	}
+
+	addOpenInitModalCommand(): void {
+		this.addCommand({
+			id: "git-init",
+			name: "Open init repository modal",
+			checkCallback: (checking: boolean) => {
+				if (!this.settings.gitRepository) {
+					if (!checking) {
+						git.get()!.init();
+
+						new GitInitModal(this.app, (repo: string) => {
+							this.settings.gitRepository = repo;
+							this.saveSettings();
+						}).open();
+					}
+
+					return true;
+				}
+			},
+		});
+	}
+
+	addOpenCommitModalCommand(): void {
 		this.addCommand({
 			id: "git-commit",
-			name: "Open git commit message modal",
+			name: "Open commit changes modal",
 			callback: () => {
 				new GitCommitModal(this.app).open();
 			},
@@ -89,29 +119,9 @@ export default class GitPlugin extends Plugin {
 	addSyncCommand(): void {
 		this.addCommand({
 			id: "git-sync",
-			name: "Sync with remote git repository",
+			name: "Sync with remote repository",
 			callback: () => {
 				new GitSyncModal(this.app).open();
-			},
-		});
-	}
-
-	addInitCommand(): void {
-		this.addCommand({
-			id: "git-init",
-			name: "Init git repository",
-			checkCallback: (checking: boolean) => {
-				if (!this.settings.gitRepository) {
-					if (!checking) {
-						git.get()!.init();
-
-						new GitInitModal(this.app, (repo: string) => {
-							this.settings.gitRepository = repo;
-						}).open();
-					}
-
-					return true;
-				}
 			},
 		});
 	}
@@ -123,7 +133,7 @@ export default class GitPlugin extends Plugin {
 	}
 
 	addSettingsPage(): void {
-		this.addSettingTab(new SettingTab(this.app, this));
+		this.addSettingTab(new SettingsTab(this.app, this));
 	}
 
 	onunload() {}
@@ -140,207 +150,3 @@ export default class GitPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 }
-
-class GitInitModal extends Modal {
-	repo: string;
-	addRemote: boolean = false;
-	onCompleteCallback: (repo: string) => any;
-
-	constructor(app: App, onCompleteCallback: (repo: string) => any) {
-		super(app);
-		this.onCompleteCallback = onCompleteCallback;
-	}
-
-	onOpen() {
-		const { contentEl } = this;
-
-		contentEl.createEl("h1", { text: "Git init" });
-
-		new Setting(contentEl)
-			.setName("Git repo url")
-			.addText((text) => text.onChange((value) => (this.repo = value)));
-
-		new Setting(contentEl).addButton((btn) =>
-			btn.setButtonText("Initialize").onClick(() => {
-				if (this.repo) {
-					this.addRemote = true;
-					this.close();
-				}
-			})
-		);
-	}
-
-	onClose() {
-		let { contentEl } = this;
-		contentEl.empty();
-		if (this.addRemote) {
-			git.get()!
-				.addRemote("origin", this.repo)
-				.then(() => {
-					new Notice(`Added remote origin "${this.repo}"`);
-					this.onCompleteCallback(this.repo);
-				})
-				.catch((err) => new Notice(err));
-		}
-	}
-}
-
-class GitCommitModal extends Modal {
-	msg: string;
-	commit: boolean = false;
-
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		const { contentEl } = this;
-
-		contentEl.createEl("h1", { text: "Git commit" });
-
-		new Setting(contentEl)
-			.setName("Message")
-			.addTextArea((text) =>
-				text.onChange((value) => (this.msg = value))
-			);
-
-		new Setting(contentEl).addButton((btn) =>
-			btn.setButtonText("Commit").onClick(() => {
-				if (this.msg) {
-					this.commit = true;
-					this.close();
-				}
-			})
-		);
-	}
-
-	onClose() {
-		let { contentEl } = this;
-		contentEl.empty();
-		if (this.commit) {
-			git.get()!
-				.add("*")
-				.commit(this.msg)
-				.then(() => {
-					new Notice(`Committed "${this.msg}"`);
-				})
-				.catch((err) => new Notice(err));
-		}
-	}
-}
-
-class GitSyncModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		const { contentEl } = this;
-
-		contentEl.createEl("h1", { text: "Git sync?" });
-
-		new Setting(contentEl)
-			.setHeading()
-			.setDesc(`This will sync with the remote branch.`)
-			.addButton((btn) =>
-				btn.setButtonText("Cancel").onClick(() => {
-					this.close();
-				})
-			)
-			.addButton((btn) => {
-				btn.setButtonText("Sync").onClick(() => {
-					// this sync will take a while
-					git.get()!
-						.pull("origin", git.getBranch() ?? undefined)
-						.catch((err) => new Notice(`${err}`))
-						.finally(() => {
-							git.get()!
-								.push("origin", git.getBranch() ?? undefined, [
-									"--set-upstream",
-								])
-								.then(() => {
-									new Notice(`Synced with remote branch`);
-									this.close();
-								})
-								.catch((err) => new Notice(`${err}`));
-						});
-				});
-			});
-	}
-
-	onClose() {
-		let { contentEl } = this;
-		contentEl.empty();
-	}
-}
-
-class SettingTab extends PluginSettingTab {
-	plugin: GitPlugin;
-
-	constructor(app: App, plugin: GitPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const { containerEl } = this;
-
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setHeading()
-			.setName("Git Integration Plugin - Settings");
-
-		new Setting(containerEl)
-			.setName("Git repository url")
-			.setDesc(
-				"Enter your git repository url (or change it to push to a different url)"
-			)
-			.addText((text) =>
-				text
-					.setPlaceholder("git repo url")
-					.setValue(this.plugin.settings.gitRepository ?? "")
-					.onChange(async (value) => {
-						this.plugin.settings.gitRepository = value;
-						await this.plugin.saveSettings();
-					})
-			);
-	}
-}
-
-const DEFAULT_GIT_OPTIONS: Partial<SimpleGitOptions> = {
-	binary: "git",
-	trimmed: true,
-};
-
-class Git {
-	private instance: SimpleGit | null = null;
-	private branch: string | null;
-
-	setup(app: App): void {
-		if (this.get() === null) {
-			git.set(simpleGit(getVaultPath(app), DEFAULT_GIT_OPTIONS));
-			this.instance
-				?.status()
-				.then((status) => (this.branch = status.current));
-		}
-	}
-
-	set(instance: SimpleGit): void {
-		this.instance = instance;
-	}
-
-	get(): SimpleGit | null {
-		return this.instance;
-	}
-
-	getBranch(): string | null {
-		return this.branch;
-	}
-}
-
-const git: Git = new Git();
-
-const getVaultPath = (app: App): string => {
-	return (app.vault.adapter as FileSystemAdapter).getBasePath();
-};
