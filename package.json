@@ -1,6 +1,6 @@
 {
 	"name": "git-integration-plugin",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "This is an Obsidian plugin to enable Git capabilities such as initialise a git repository and make git commits.",
 	"main": "main.js",
 	"scripts": {

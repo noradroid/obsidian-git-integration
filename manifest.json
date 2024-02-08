@@ -1,7 +1,7 @@
 {
 	"id": "git-integration-plugin",
 	"name": "Git Integration Plugin",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"minAppVersion": "1.5.3",
 	"description": "Perform Git capabilities such as initialise a git repository and make git commits.",
 	"author": "noradroid",
