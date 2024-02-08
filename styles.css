@@ -23,3 +23,16 @@ If your plugin does not need CSS, delete this file.
 .font-medium {
   font-size: var(--font-ui-medium);
 }
+
+.bg-theme {
+  background-color: var(--interactive-accent) !important;
+  color: var(--text-on-accent);
+}
+
+.modal-setting-item-w-text-area {
+  .setting-item-control {
+    textarea {
+      width: 100%;
+    }
+  }
+}

@@ -1,4 +1,11 @@
-import { Modal, App, Setting, Notice } from "obsidian";
+import {
+	Modal,
+	App,
+	Setting,
+	Notice,
+	TextAreaComponent,
+	ButtonComponent,
+} from "obsidian";
 import { git } from "src/config/git.config";
 
 export class GitCommitModal extends Modal {
@@ -15,19 +22,30 @@ export class GitCommitModal extends Modal {
 		contentEl.createEl("h1", { text: "Git commit" });
 
 		new Setting(contentEl)
-			.setName("Message")
-			.addTextArea((text) =>
-				text.onChange((value) => (this.msg = value))
-			);
-
-		new Setting(contentEl).addButton((btn) =>
-			btn.setButtonText("Commit").onClick(() => {
-				if (this.msg) {
-					this.commit = true;
-					this.close();
-				}
+			.setName("Commit message")
+			.addTextArea((comp: TextAreaComponent) => {
+				comp.setPlaceholder("Enter commit message...");
+				comp.onChange((value) => (this.msg = value));
 			})
-		);
+			.setClass("modal-setting-item-w-text-area");
+
+		new Setting(contentEl)
+			.addButton((btn: ButtonComponent) =>
+				btn.setButtonText("Cancel").onClick(() => {
+					this.close();
+				})
+			)
+			.addButton((btn: ButtonComponent) =>
+				btn
+					.setButtonText("Commit")
+					.setClass("bg-theme")
+					.onClick(() => {
+						if (this.msg) {
+							this.commit = true;
+							this.close();
+						}
+					})
+			);
 	}
 
 	onClose() {

@@ -22,7 +22,7 @@ export class GitSyncModal extends Modal {
 				})
 			)
 			.addButton((btn) => {
-				btn.setButtonText("Sync").onClick(() => {
+				btn.setButtonText("Sync").setClass("bg-theme").onClick(() => {
 					// this sync will take a while
 					git.pull()
 						.then(() => {
