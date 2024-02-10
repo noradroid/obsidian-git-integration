@@ -6,12 +6,13 @@ import { GitSyncModal } from "./components/git-sync.modal";
 import { git } from "./config/git.config";
 import { DEFAULT_SETTINGS, GitPluginSettings } from "./config/settings.config";
 import { SettingsTab } from "./settings-tab";
+import { getVaultPath } from "./utils/utils";
 
 export default class GitPlugin extends Plugin {
 	settings: GitPluginSettings;
 
 	async onload() {
-		git.setup(this.app);
+		git.setup(getVaultPath(this.app));
 
 		await this.loadSettings();
 

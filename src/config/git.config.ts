@@ -1,4 +1,3 @@
-import { App, FileSystemAdapter } from "obsidian";
 import simpleGit, {
 	SimpleGitOptions,
 	SimpleGit,
@@ -18,9 +17,9 @@ export class Git {
 	private instance: SimpleGit | null = null;
 	private branch: string | null;
 
-	setup(app: App): void {
+	setup(baseDir: string): void {
 		if (this.get() === null) {
-			git.set(simpleGit(getVaultPath(app), DEFAULT_GIT_OPTIONS));
+			git.set(simpleGit(baseDir, DEFAULT_GIT_OPTIONS));
 			this.instance
 				?.status()
 				.then((status) => (this.branch = status.current));
@@ -64,8 +63,5 @@ export class Git {
 	}
 }
 
+// TODO: refactor
 export const git: Git = new Git();
-
-const getVaultPath = (app: App): string => {
-	return (app.vault.adapter as FileSystemAdapter).getBasePath();
-};
