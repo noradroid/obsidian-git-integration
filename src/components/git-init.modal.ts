@@ -1,5 +1,5 @@
 import { Modal, App, Setting, Notice } from "obsidian";
-import { git } from "src/config/git.config";
+import { git } from "src/git/git";
 
 export class GitInitModal extends Modal {
 	repo: string;

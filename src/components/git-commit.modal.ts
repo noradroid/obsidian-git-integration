@@ -6,7 +6,7 @@ import {
 	TextAreaComponent,
 	ButtonComponent,
 } from "obsidian";
-import { git } from "src/config/git.config";
+import { git } from "src/git/git";
 
 export class GitCommitModal extends Modal {
 	msg: string;
