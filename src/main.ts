@@ -46,49 +46,49 @@ export default class GitPlugin extends Plugin {
 		return new GitSyncModal(this.app, () => {
 			// this sync will take a while
 			this.git
-				.pull()
-				.then(() => {
-					this.git.push();
-					new Notice(`Synced with remote branch`);
+				.push()
+				.then((res) => {
+					if (res.update) {
+						new Notice(`Pushed new changes to remote branch`);
+					} else {
+						new Notice("No changes to push");
+					}
 				})
-				.catch((err: string) => {
-					new Notice(`${err}`);
-					new DebugModal(this.app, err).open();
-				});
+				.catch((err) => new DebugModal(this.app, err).open());
+			// this.git
+			// 	.pull()
+			// 	.then(() => {
+			// 		this.git.push();
+			// 		new Notice(`Synced with remote branch`);
+			// 	})
+			// 	.catch((err: string) => {
+			// 		new Notice(`${err}`);
+			// 		new DebugModal(this.app, err).open();
+			// 	});
 		});
 	}
 
 	async onload() {
-		this.git = new Git(getVaultPath(this.app));
+		try {
+			this.git = new Git(getVaultPath(this.app));
 
-		await this.loadSettings();
+			await this.loadSettings();
 
-		this.addMenuRibbonIcon();
+			this.addSettingsPage();
+			this.addMenuRibbonIcon();
+			this.addOpenInitModalCommand();
+			this.addSyncCommand();
+			this.addOpenCommitModalCommand();
+			this.addStatusBarIndication();
 
-		// this.addCommitRibbonIcon();
-
-		// this.addSyncRibbonIcon();
-
-		this.addOpenInitModalCommand();
-
-		this.addSyncCommand();
-
-		this.addOpenCommitModalCommand();
-
-		this.addStatusBarIndication();
-
-		this.addSettingsPage();
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, "click", (evt: MouseEvent) => {
-			console.log("click", evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(
-			window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000)
-		);
+			// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
+			// Using this function will automatically remove the event listener when this plugin is disabled.
+			this.registerDomEvent(document, "click", (evt: MouseEvent) => {
+				console.log("click", evt);
+			});
+		} catch (e) {
+			new DebugModal(this.app, e);
+		}
 	}
 
 	addMenuRibbonIcon(): void {

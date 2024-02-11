@@ -6,7 +6,7 @@ Features:
 - initialise repository
 - specify remote url
 - add and commit all files aside from gitignore
-- pull and push (sync) with remote repository
+- push to remote repository
 
 ### Initialise the repository
 
@@ -38,4 +38,4 @@ Select "Git sync" from the git menu. Alternatively use the command palette and s
 
 ![Git sync modal](docs/images/image-3.png)
 
-Click "Sync" to first pull any latest changes, then push new changes to remote.
+Click "Sync" to push new changes to remote.

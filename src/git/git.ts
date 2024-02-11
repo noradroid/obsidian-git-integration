@@ -1,14 +1,13 @@
 import simpleGit, {
-	SimpleGitOptions,
-	SimpleGit,
-	PullResult,
-	PushResult,
+	CommitResult,
 	GitResponseError,
 	PullDetailSummary,
+	PullResult,
 	PushDetail,
-	CommitResult,
+	PushResult,
 	Response,
-	InitResult,
+	SimpleGit,
+	SimpleGitOptions,
 } from "simple-git";
 
 export const DEFAULT_GIT_OPTIONS: Partial<SimpleGitOptions> = {
