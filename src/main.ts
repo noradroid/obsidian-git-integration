@@ -98,6 +98,7 @@ export default class GitPlugin extends Plugin {
 			(evt: MouseEvent) => {
 				new GitMenuModal(
 					this.app,
+					this.initModal,
 					this.commitModal,
 					this.syncModal
 				).open();
@@ -134,6 +135,7 @@ export default class GitPlugin extends Plugin {
 			callback: () => {
 				new GitMenuModal(
 					this.app,
+					this.initModal,
 					this.commitModal,
 					this.syncModal
 				).open();
