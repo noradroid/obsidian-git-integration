@@ -1,19 +1,19 @@
 import {
-	Modal,
 	App,
-	Setting,
-	Notice,
-	TextAreaComponent,
 	ButtonComponent,
+	Modal,
+	Setting,
+	TextAreaComponent,
 } from "obsidian";
-import { git } from "src/git/git";
 
 export class GitCommitModal extends Modal {
 	msg: string;
 	commit: boolean = false;
+	onCompleteCallback: (msg: string) => any;
 
-	constructor(app: App) {
+	constructor(app: App, onCompleteCallback: (msg: string) => any) {
 		super(app);
+		this.onCompleteCallback = onCompleteCallback;
 	}
 
 	onOpen() {
@@ -40,7 +40,7 @@ export class GitCommitModal extends Modal {
 					.setButtonText("Commit")
 					.setClass("bg-theme")
 					.onClick(() => {
-						if (this.msg) {
+						if (this.msg && this.msg.trim().length > 0) {
 							this.commit = true;
 							this.close();
 						}
@@ -52,13 +52,7 @@ export class GitCommitModal extends Modal {
 		let { contentEl } = this;
 		contentEl.empty();
 		if (this.commit) {
-			git.get()!
-				.add("*")
-				.commit(this.msg)
-				.then(() => {
-					new Notice(`Committed "${this.msg}"`);
-				})
-				.catch((err) => new Notice(err));
+			this.onCompleteCallback(this.msg);
 		}
 	}
 }

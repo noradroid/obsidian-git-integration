@@ -1,18 +1,65 @@
-import { Plugin } from "obsidian";
+import { Notice, Plugin } from "obsidian";
+import { CommitResult } from "simple-git";
+import { DebugModal } from "./components/debug.modal";
 import { GitCommitModal } from "./components/git-commit.modal";
 import { GitInitModal } from "./components/git-init.modal";
 import { GitMenuModal } from "./components/git-menu.modal";
 import { GitSyncModal } from "./components/git-sync.modal";
-import { git } from "./git/git";
 import { DEFAULT_SETTINGS, GitPluginSettings } from "./config/settings.config";
+import { Git } from "./git/git";
 import { SettingsTab } from "./settings-tab";
 import { getVaultPath } from "./utils/utils";
 
 export default class GitPlugin extends Plugin {
 	settings: GitPluginSettings;
+	git: Git;
+
+	get initModal(): GitInitModal {
+		return new GitInitModal(this.app, (repo: string) => {
+			this.git
+				.initAndAddRemote(repo)
+				.then(() => {
+					new Notice(`Added remote origin "${repo}"`);
+					this.settings.gitRepository = repo;
+					this.saveSettings();
+				})
+				.catch((err) => new Notice(err));
+		});
+	}
+
+	get commitModal(): GitCommitModal {
+		return new GitCommitModal(this.app, (msg: string) => {
+			this.git
+				.addAllAndCommit(msg)
+				.then((res: CommitResult) => {
+					if (res.commit) {
+						new Notice(`Committed "${msg}"`);
+					} else {
+						new Notice(`No changes to commit`);
+					}
+				})
+				.catch((err) => new Notice(err));
+		});
+	}
+
+	get syncModal(): GitSyncModal {
+		return new GitSyncModal(this.app, () => {
+			// this sync will take a while
+			this.git
+				.pull()
+				.then(() => {
+					this.git.push();
+					new Notice(`Synced with remote branch`);
+				})
+				.catch((err: string) => {
+					new Notice(`${err}`);
+					new DebugModal(this.app, err).open();
+				});
+		});
+	}
 
 	async onload() {
-		git.setup(getVaultPath(this.app));
+		this.git = new Git(getVaultPath(this.app));
 
 		await this.loadSettings();
 
@@ -49,7 +96,11 @@ export default class GitPlugin extends Plugin {
 			"git-compare-arrows",
 			"Open git menu",
 			(evt: MouseEvent) => {
-				new GitMenuModal(this.app).open();
+				new GitMenuModal(
+					this.app,
+					this.commitModal,
+					this.syncModal
+				).open();
 			}
 		);
 	}
@@ -81,7 +132,11 @@ export default class GitPlugin extends Plugin {
 			id: "git-menu",
 			name: "Open git menu",
 			callback: () => {
-				new GitMenuModal(this.app).open();
+				new GitMenuModal(
+					this.app,
+					this.commitModal,
+					this.syncModal
+				).open();
 			},
 		});
 	}
@@ -93,12 +148,7 @@ export default class GitPlugin extends Plugin {
 			checkCallback: (checking: boolean) => {
 				if (!this.settings.gitRepository) {
 					if (!checking) {
-						git.get()!.init();
-
-						new GitInitModal(this.app, (repo: string) => {
-							this.settings.gitRepository = repo;
-							this.saveSettings();
-						}).open();
+						this.initModal.open();
 					}
 
 					return true;
@@ -112,7 +162,7 @@ export default class GitPlugin extends Plugin {
 			id: "git-commit",
 			name: "Open commit changes modal",
 			callback: () => {
-				new GitCommitModal(this.app).open();
+				this.commitModal.open();
 			},
 		});
 	}
@@ -122,7 +172,7 @@ export default class GitPlugin extends Plugin {
 			id: "git-sync",
 			name: "Sync with remote repository",
 			callback: () => {
-				new GitSyncModal(this.app).open();
+				this.syncModal.open();
 			},
 		});
 	}

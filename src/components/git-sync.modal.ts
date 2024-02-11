@@ -1,10 +1,11 @@
-import { Modal, App, Setting, Notice } from "obsidian";
-import { git } from "src/git/git";
-import { DebugModal } from "./debug.modal";
+import { App, Modal, Setting } from "obsidian";
 
 export class GitSyncModal extends Modal {
-	constructor(app: App) {
+	onCompleteCallback: () => any;
+
+	constructor(app: App, onCompleteCallback: () => any) {
 		super(app);
+		this.onCompleteCallback = onCompleteCallback;
 	}
 
 	onOpen() {
@@ -26,17 +27,8 @@ export class GitSyncModal extends Modal {
 				btn.setButtonText("Sync")
 					.setClass("bg-theme")
 					.onClick(() => {
-						// this sync will take a while
-						git.pull()
-							.then(() => {
-								git.push();
-								new Notice(`Synced with remote branch`);
-								this.close();
-							})
-							.catch((err) => {
-								new Notice(`${err}`);
-								new DebugModal(this.app, err).open();
-							});
+						this.onCompleteCallback();
+						this.close();
 					});
 			});
 	}

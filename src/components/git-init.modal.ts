@@ -1,5 +1,4 @@
-import { Modal, App, Setting, Notice } from "obsidian";
-import { git } from "src/git/git";
+import { App, Modal, Setting } from "obsidian";
 
 export class GitInitModal extends Modal {
 	repo: string;
@@ -34,13 +33,7 @@ export class GitInitModal extends Modal {
 		let { contentEl } = this;
 		contentEl.empty();
 		if (this.addRemote) {
-			git.get()!
-				.addRemote("origin", this.repo)
-				.then(() => {
-					new Notice(`Added remote origin "${this.repo}"`);
-					this.onCompleteCallback(this.repo);
-				})
-				.catch((err) => new Notice(err));
+			this.onCompleteCallback(this.repo);
 		}
 	}
 }

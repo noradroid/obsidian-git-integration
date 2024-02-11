@@ -6,6 +6,9 @@ import simpleGit, {
 	GitResponseError,
 	PullDetailSummary,
 	PushDetail,
+	CommitResult,
+	Response,
+	InitResult,
 } from "simple-git";
 
 export const DEFAULT_GIT_OPTIONS: Partial<SimpleGitOptions> = {
@@ -14,34 +17,44 @@ export const DEFAULT_GIT_OPTIONS: Partial<SimpleGitOptions> = {
 };
 
 export class Git {
-	private instance: SimpleGit | null = null;
-	private branch: string | null;
+	private _instance: SimpleGit | null = null;
 
-	setup(baseDir: string): void {
-		if (this.get() === null) {
-			git.set(simpleGit(baseDir, DEFAULT_GIT_OPTIONS));
-			this.instance
-				?.status()
-				.then((status) => (this.branch = status.current));
+	private get instance(): SimpleGit {
+		if (this._instance === null || this._instance === undefined) {
+			throw new Error("Git instance is not instantiated");
 		}
+		return this._instance;
 	}
 
-	set(instance: SimpleGit): void {
-		this.instance = instance;
+	private set instance(inst: SimpleGit) {
+		this._instance = inst;
 	}
 
-	get(): SimpleGit | null {
-		return this.instance;
+	private branch: string | null = null;
+
+	constructor(baseDir: string) {
+		this.instance = simpleGit({
+			...DEFAULT_GIT_OPTIONS,
+			baseDir,
+		});
+		this.instance
+			?.status()
+			.then((status) => (this.branch = status.current));
 	}
 
 	getBranch(): string | null {
 		return this.branch;
 	}
 
+	addAllAndCommit(msg: string): Response<CommitResult> {
+		return this.instance.add("*").commit(msg);
+	}
+
+	initAndAddRemote(repo: string): Response<string> {
+		return this.instance.init().addRemote("origin", repo);
+	}
+
 	pull(): Promise<void | PullResult> {
-		if (this.instance === null) {
-			throw new Error("Git instance is not initialised");
-		}
 		return this.instance
 			.pull("origin", this.getBranch() ?? undefined)
 			.catch((err: GitResponseError<PullDetailSummary>) => {
@@ -52,9 +65,6 @@ export class Git {
 	}
 
 	push(): Promise<PushResult> {
-		if (this.instance === null) {
-			throw new Error("Git instance is not initialised");
-		}
 		return this.instance
 			.push("origin", this.getBranch() ?? undefined, ["--set-upstream"])
 			.catch((err: GitResponseError<PushDetail>) => {
@@ -62,6 +72,3 @@ export class Git {
 			});
 	}
 }
-
-// TODO: refactor
-export const git: Git = new Git();

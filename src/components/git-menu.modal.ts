@@ -1,9 +1,13 @@
-import { Modal, App, Setting } from "obsidian";
+import { App, Modal, Setting } from "obsidian";
 import { GitCommitModal } from "./git-commit.modal";
 import { GitSyncModal } from "./git-sync.modal";
 
 export class GitMenuModal extends Modal {
-	constructor(app: App) {
+	constructor(
+		app: App,
+		private gitCommitModal: GitCommitModal,
+		private gitSyncModal: GitSyncModal
+	) {
 		super(app);
 	}
 
@@ -20,7 +24,8 @@ export class GitMenuModal extends Modal {
 				button.setButtonText("Git commit");
 				button.setClass("w-100").setClass("font-medium");
 				button.onClick((evt: MouseEvent) => {
-					new GitCommitModal(this.app).open();
+					this.gitCommitModal.open();
+					// new GitCommitModal(this.app).open();
 					this.close();
 				});
 			})
@@ -28,7 +33,8 @@ export class GitMenuModal extends Modal {
 				button.setButtonText("Git sync");
 				button.setClass("w-100").setClass("font-medium");
 				button.onClick((evt: MouseEvent) => {
-					new GitSyncModal(this.app).open();
+					this.gitSyncModal.open();
+					// new GitSyncModal(this.app).open();
 					this.close();
 				});
 			});
