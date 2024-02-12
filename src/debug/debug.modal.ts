@@ -1,4 +1,4 @@
-import { App, Modal, Setting } from "obsidian";
+import { App, Modal } from "obsidian";
 
 export class DebugModal extends Modal {
 	contents: string;

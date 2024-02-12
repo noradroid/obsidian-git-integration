@@ -1,11 +1,12 @@
 import { Notice, Plugin } from "obsidian";
 import { CommitResult } from "simple-git";
-import { DebugModal } from "./components/debug.modal";
 import { GitCommitModal } from "./components/git-commit.modal";
 import { GitInitModal } from "./components/git-init.modal";
 import { GitMenuModal } from "./components/git-menu.modal";
 import { GitSyncModal } from "./components/git-sync.modal";
-import { DEFAULT_SETTINGS, GitPluginSettings } from "./config/settings.config";
+import { DEFAULT_SETTINGS } from "./config/default-settings.config";
+import { GitPluginSettings } from "./config/plugin-settings.model";
+import { DebugModal } from "./debug/debug.modal";
 import { Git } from "./git/git";
 import { SettingsTab } from "./settings-tab";
 import { getVaultPath } from "./utils/utils";
