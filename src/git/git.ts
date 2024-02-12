@@ -71,7 +71,9 @@ export class Git {
   }
 
   addRemote(repo: string): Response<string> {
-    return this.instance.init().addRemote("origin", repo);
+    return this.instance
+      .removeRemote(this.REMOTE_NAME)
+      .addRemote(this.REMOTE_NAME, repo);
   }
 
   pull(): Promise<void | PullResult> {

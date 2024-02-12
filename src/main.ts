@@ -19,6 +19,15 @@ export default class GitPlugin extends Plugin {
   settings: GitPluginSettings;
   git: Git;
 
+  get menuModal(): GitMenuModal {
+    return new GitMenuModal(
+      this.app,
+      this.settings.gitRemote ? null : this.initRemoteModal,
+      this.commitModal,
+      this.syncModal
+    );
+  }
+
   get initRemoteModal(): GitInitRemote {
     return new GitInitRemote(this.app, (repo: string) => {
       this.git
@@ -52,7 +61,11 @@ export default class GitPlugin extends Plugin {
       this.git
         .push()
         .then((res) => {
-          if (res.update) {
+          console.log(res);
+          if (
+            res.update ||
+            (res.pushed.length > 0 && res.pushed[0].new === true)
+          ) {
             new Notice(`Pushed new changes to remote branch`);
           } else {
             new Notice("No changes to push");
@@ -106,12 +119,7 @@ export default class GitPlugin extends Plugin {
 
   addMenuRibbonIcon(): void {
     this.addRibbonIcon("git-compare-arrows", "Open git menu", () => {
-      new GitMenuModal(
-        this.app,
-        this.initRemoteModal,
-        this.commitModal,
-        this.syncModal
-      ).open();
+      this.menuModal.open();
     });
   }
 
@@ -142,12 +150,7 @@ export default class GitPlugin extends Plugin {
       id: "git-menu",
       name: "Open git menu",
       callback: () => {
-        new GitMenuModal(
-          this.app,
-          this.initRemoteModal,
-          this.commitModal,
-          this.syncModal
-        ).open();
+        this.menuModal.open();
       },
     });
   }
@@ -195,7 +198,13 @@ export default class GitPlugin extends Plugin {
   }
 
   addSettingsPage(): void {
-    this.addSettingTab(new SettingsTab(this.app, this));
+    this.addSettingTab(
+      new SettingsTab(this.app, this, () => {
+        if (this.settings.gitRemote) {
+          this.git.addRemote(this.settings.gitRemote);
+        }
+      })
+    );
   }
 
   openDebugModal(

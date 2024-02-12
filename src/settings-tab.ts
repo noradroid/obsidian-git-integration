@@ -3,10 +3,12 @@ import GitPlugin from "src/main";
 
 export class SettingsTab extends PluginSettingTab {
   plugin: GitPlugin;
+  onCompleteCallback: () => void;
 
-  constructor(app: App, plugin: GitPlugin) {
+  constructor(app: App, plugin: GitPlugin, onCompleteCallback: () => void) {
     super(app, plugin);
     this.plugin = plugin;
+    this.onCompleteCallback = onCompleteCallback;
   }
 
   display(): void {
@@ -30,6 +32,7 @@ export class SettingsTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.gitRemote = value;
             await this.plugin.saveSettings();
+            this.onCompleteCallback();
           })
       );
   }

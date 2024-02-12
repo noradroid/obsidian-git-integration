@@ -6,7 +6,7 @@ import { GitSyncModal } from "./git-sync.modal";
 export class GitMenuModal extends Modal {
   constructor(
     app: App,
-    private gitInitModal: GitInitRemote,
+    private gitInitModal: GitInitRemote | null,
     private gitCommitModal: GitCommitModal,
     private gitSyncModal: GitSyncModal
   ) {
@@ -17,16 +17,18 @@ export class GitMenuModal extends Modal {
     const { contentEl } = this;
     contentEl.createEl("h1", { text: "Git menu" });
 
-    new Setting(contentEl)
-      .setClass("setting-item-without-info")
-      .addButton((button) => {
-        button.setButtonText("Git init");
-        button.setClass("w-100").setClass("font-medium");
-        button.onClick(() => {
-          this.gitInitModal.open();
-          this.close();
+    if (this.gitInitModal !== null) {
+      new Setting(contentEl)
+        .setClass("setting-item-without-info")
+        .addButton((button) => {
+          button.setButtonText("Git init");
+          button.setClass("w-100").setClass("font-medium");
+          button.onClick(() => {
+            this.gitInitModal!.open();
+            this.close();
+          });
         });
-      });
+    }
     new Setting(contentEl)
       .setClass("setting-item-without-info")
       .addButton((button) => {
