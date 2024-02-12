@@ -4,7 +4,7 @@ import { GitCommitModal } from "./components/git-commit.modal";
 import { GitInitModal } from "./components/git-init.modal";
 import { GitMenuModal } from "./components/git-menu.modal";
 import { GitSyncModal } from "./components/git-sync.modal";
-import { DEFAULT_SETTINGS } from "./config/default-settings.config";
+import { IS_DEBUG_MODE, DEFAULT_SETTINGS } from "./config/config";
 import { GitPluginSettings } from "./config/plugin-settings.model";
 import { DebugModal } from "./debug/debug.modal";
 import { Git } from "./git/git";
@@ -55,17 +55,20 @@ export default class GitPlugin extends Plugin {
             new Notice("No changes to push");
           }
         })
-        .catch((err) => new DebugModal(this.app, err).open());
+        .catch((err) => {
+          this.openDebugModal(err);
+          new Notice(err);
+        });
       // this.git
-      // 	.pull()
-      // 	.then(() => {
-      // 		this.git.push();
-      // 		new Notice(`Synced with remote branch`);
-      // 	})
-      // 	.catch((err: string) => {
-      // 		new Notice(`${err}`);
-      // 		new DebugModal(this.app, err).open();
-      // 	});
+      //   .pull()
+      //   .then(() => {
+      //     this.git.push();
+      //     new Notice(`Synced with remote branch`);
+      //   })
+      //   .catch((err: string) => {
+      //     this.openDebugModal(err);
+      //     new Notice(err);
+      //   });
     });
   }
 
@@ -87,8 +90,9 @@ export default class GitPlugin extends Plugin {
       this.registerDomEvent(document, "click", (evt: MouseEvent) => {
         console.log("click", evt);
       });
-    } catch (e) {
-      new DebugModal(this.app, e);
+    } catch (err) {
+      this.openDebugModal(err);
+      new Notice(err);
     }
   }
 
@@ -184,6 +188,12 @@ export default class GitPlugin extends Plugin {
 
   addSettingsPage(): void {
     this.addSettingTab(new SettingsTab(this.app, this));
+  }
+
+  openDebugModal(err: string): void {
+    if (IS_DEBUG_MODE) {
+      new DebugModal(this.app, err).open();
+    }
   }
 
   onunload() {}
