@@ -1,9 +1,9 @@
 {
   "id": "git-integration",
   "name": "Git Integration",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "minAppVersion": "1.5.3",
-  "description": "Perform Git capabilities such as initialise a git repository and make git commits.",
+  "description": "Easily backup vault on a remote repository.",
   "author": "noradroid",
   "authorUrl": "https://github.com/noradroid",
   "isDesktopOnly": true
