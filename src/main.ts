@@ -8,6 +8,7 @@ import { DEFAULT_SETTINGS, IS_DEBUG_MODE } from "./config/config";
 import { GitPluginSettings } from "./config/plugin-settings.model";
 import { DebugModal } from "./debug/debug.modal";
 import { ErrorModal } from "./debug/error.modal";
+import { openFolder } from "./debug/open-folder";
 import { Git } from "./git/git";
 import { SettingsTab } from "./settings-tab";
 import { getVaultPath } from "./utils/utils";
@@ -84,6 +85,10 @@ export default class GitPlugin extends Plugin {
       this.addSyncCommand();
       this.addOpenCommitModalCommand();
       this.addStatusBarIndication();
+
+      if (IS_DEBUG_MODE) {
+        this.addOpenFolderRibbonIcon();
+      }
 
       // If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
       // Using this function will automatically remove the event listener when this plugin is disabled.
@@ -205,6 +210,15 @@ export default class GitPlugin extends Plugin {
         }
       }
     }
+  }
+
+  /**
+   * Open vault base folder.
+   */
+  addOpenFolderRibbonIcon(): void {
+    this.addRibbonIcon("folder-open", "Open folder in file explorer", () => {
+      openFolder(getVaultPath(this.app));
+    });
   }
 
   updateGitRepository(repo: string | null): void {
