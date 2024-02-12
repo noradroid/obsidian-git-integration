@@ -14,7 +14,7 @@ Create an empty repository on GitHub.
 
 Open the command palette (Ctrl+P on Windows) and search "Open init repository modal".
 
-Paste the repository url and click "Initialize" to finish setting up.
+Paste the remote repository url and click "Initialize" to finish setting up.
 
 ### Create a commit
 

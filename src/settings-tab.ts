@@ -19,9 +19,9 @@ export class SettingsTab extends PluginSettingTab {
       .setName("Git Integration Plugin - Settings");
 
     new Setting(containerEl)
-      .setName("Git repository url")
+      .setName("Remote repository url")
       .setDesc(
-        "Enter your git repository url (or change it to push to a different url)"
+        "Enter your remote repository url (or change it to push to a different url)"
       )
       .addText((text) =>
         text

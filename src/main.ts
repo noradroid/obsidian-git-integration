@@ -7,8 +7,10 @@ import { GitSyncModal } from "./components/git-sync.modal";
 import { DEFAULT_SETTINGS, IS_DEBUG_MODE } from "./config/config";
 import { GitPluginSettings } from "./config/plugin-settings.model";
 import { DebugModal } from "./debug/debug.modal";
+import { DeleteGitFolderModal } from "./debug/delete-git-folder.modal";
 import { ErrorModal } from "./debug/error.modal";
-import { openFolder } from "./debug/open-folder";
+import { deleteGitFolder } from "./debug/utils/delete-folder";
+import { openFolder } from "./debug/utils/open-folder";
 import { Git } from "./git/git";
 import { SettingsTab } from "./settings-tab";
 import { getVaultPath } from "./utils/utils";
@@ -23,7 +25,7 @@ export default class GitPlugin extends Plugin {
         .initAndAddRemote(repo)
         .then(() => {
           new Notice(`Added remote origin "${repo}"`);
-          this.updateGitRepository(repo);
+          this.updateRemoteRepository(repo);
         })
         .catch((err) => new Notice(err));
     });
@@ -88,6 +90,7 @@ export default class GitPlugin extends Plugin {
 
       if (IS_DEBUG_MODE) {
         this.addOpenFolderRibbonIcon();
+        this.addDeleteGitFolderRibbonIcon();
       }
 
       // If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
@@ -199,7 +202,7 @@ export default class GitPlugin extends Plugin {
     content: string | null,
     mode: "ERROR" | "DEBUG" = "DEBUG"
   ): void {
-    if (IS_DEBUG_MODE && content && content.trim()) {
+    if (IS_DEBUG_MODE && content) {
       switch (mode) {
         case "ERROR": {
           new ErrorModal(this.app, content).open();
@@ -221,7 +224,19 @@ export default class GitPlugin extends Plugin {
     });
   }
 
-  updateGitRepository(repo: string | null): void {
+  /**
+   * Delete .git folder
+   */
+  addDeleteGitFolderRibbonIcon(): void {
+    this.addRibbonIcon("trash", "Delete .git folder", () => {
+      new DeleteGitFolderModal(this.app, () => {
+        deleteGitFolder(getVaultPath(this.app));
+        this.updateRemoteRepository();
+      }).open();
+    });
+  }
+
+  updateRemoteRepository(repo?: string | null): void {
     this.settings.gitRemote = repo ?? "";
     this.saveSettings();
   }
@@ -233,7 +248,7 @@ export default class GitPlugin extends Plugin {
 
     const gitRemote = await this.git.getRemote();
     if (gitRemote && !this.settings.gitRemote) {
-      this.updateGitRepository(gitRemote);
+      this.updateRemoteRepository(gitRemote);
     }
   }
 
