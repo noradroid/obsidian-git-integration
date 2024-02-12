@@ -1,3 +1,3 @@
 export interface GitPluginSettings {
-  gitRepository: string | null;
+  gitRemote: string | null;
 }

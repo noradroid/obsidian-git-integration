@@ -4,9 +4,10 @@ import { GitCommitModal } from "./components/git-commit.modal";
 import { GitInitModal } from "./components/git-init.modal";
 import { GitMenuModal } from "./components/git-menu.modal";
 import { GitSyncModal } from "./components/git-sync.modal";
-import { IS_DEBUG_MODE, DEFAULT_SETTINGS } from "./config/config";
+import { DEFAULT_SETTINGS, IS_DEBUG_MODE } from "./config/config";
 import { GitPluginSettings } from "./config/plugin-settings.model";
 import { DebugModal } from "./debug/debug.modal";
+import { ErrorModal } from "./debug/error.modal";
 import { Git } from "./git/git";
 import { SettingsTab } from "./settings-tab";
 import { getVaultPath } from "./utils/utils";
@@ -21,8 +22,7 @@ export default class GitPlugin extends Plugin {
         .initAndAddRemote(repo)
         .then(() => {
           new Notice(`Added remote origin "${repo}"`);
-          this.settings.gitRepository = repo;
-          this.saveSettings();
+          this.updateGitRepository(repo);
         })
         .catch((err) => new Notice(err));
     });
@@ -56,7 +56,7 @@ export default class GitPlugin extends Plugin {
           }
         })
         .catch((err) => {
-          this.openDebugModal(err);
+          this.openDebugModal(err, "ERROR");
           new Notice(err);
         });
       // this.git
@@ -66,7 +66,7 @@ export default class GitPlugin extends Plugin {
       //     new Notice(`Synced with remote branch`);
       //   })
       //   .catch((err: string) => {
-      //     this.openDebugModal(err);
+      //     this.openDebugModal(err, "ERROR");
       //     new Notice(err);
       //   });
     });
@@ -91,7 +91,7 @@ export default class GitPlugin extends Plugin {
         console.log("click", evt);
       });
     } catch (err) {
-      this.openDebugModal(err);
+      this.openDebugModal(err, "ERROR");
       new Notice(err);
     }
   }
@@ -149,7 +149,7 @@ export default class GitPlugin extends Plugin {
       id: "git-init",
       name: "Open init repository modal",
       checkCallback: (checking: boolean) => {
-        if (!this.settings.gitRepository) {
+        if (!this.settings.gitRemote) {
           if (!checking) {
             this.initModal.open();
           }
@@ -190,16 +190,37 @@ export default class GitPlugin extends Plugin {
     this.addSettingTab(new SettingsTab(this.app, this));
   }
 
-  openDebugModal(err: string): void {
-    if (IS_DEBUG_MODE) {
-      new DebugModal(this.app, err).open();
+  openDebugModal(
+    content: string | null,
+    mode: "ERROR" | "DEBUG" = "DEBUG"
+  ): void {
+    if (IS_DEBUG_MODE && content && content.trim()) {
+      switch (mode) {
+        case "ERROR": {
+          new ErrorModal(this.app, content).open();
+          break;
+        }
+        default: {
+          new DebugModal(this.app, content).open();
+        }
+      }
     }
+  }
+
+  updateGitRepository(repo: string | null): void {
+    this.settings.gitRemote = repo ?? "";
+    this.saveSettings();
   }
 
   onunload() {}
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+
+    const gitRemote = await this.git.getRemote();
+    if (gitRemote && !this.settings.gitRemote) {
+      this.updateGitRepository(gitRemote);
+    }
   }
 
   async saveSettings() {
