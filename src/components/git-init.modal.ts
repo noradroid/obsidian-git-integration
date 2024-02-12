@@ -1,6 +1,6 @@
 import { App, Modal, Setting } from "obsidian";
 
-export class GitInitModal extends Modal {
+export class GitInitRemote extends Modal {
   repo: string;
   addRemote: boolean = false;
   onCompleteCallback: (repo: string) => void;
@@ -13,10 +13,10 @@ export class GitInitModal extends Modal {
   onOpen() {
     const { contentEl } = this;
 
-    contentEl.createEl("h1", { text: "Git init" });
+    contentEl.createEl("h1", { text: "Git init remote" });
 
     new Setting(contentEl)
-      .setName("Git repo url")
+      .setName("Remote repository url")
       .addText((text) => text.onChange((value) => (this.repo = value)));
 
     new Setting(contentEl).addButton((btn) =>

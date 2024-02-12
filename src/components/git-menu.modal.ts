@@ -1,12 +1,12 @@
 import { App, Modal, Setting } from "obsidian";
 import { GitCommitModal } from "./git-commit.modal";
-import { GitInitModal } from "./git-init.modal";
+import { GitInitRemote } from "./git-init.modal";
 import { GitSyncModal } from "./git-sync.modal";
 
 export class GitMenuModal extends Modal {
   constructor(
     app: App,
-    private gitInitModal: GitInitModal,
+    private gitInitModal: GitInitRemote,
     private gitCommitModal: GitCommitModal,
     private gitSyncModal: GitSyncModal
   ) {

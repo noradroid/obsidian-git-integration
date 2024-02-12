@@ -1,7 +1,7 @@
 import { Notice, Plugin } from "obsidian";
 import { CommitResult } from "simple-git";
 import { GitCommitModal } from "./components/git-commit.modal";
-import { GitInitModal } from "./components/git-init.modal";
+import { GitInitRemote } from "./components/git-init.modal";
 import { GitMenuModal } from "./components/git-menu.modal";
 import { GitSyncModal } from "./components/git-sync.modal";
 import { DEFAULT_SETTINGS, IS_DEBUG_MODE } from "./config/config";
@@ -19,10 +19,10 @@ export default class GitPlugin extends Plugin {
   settings: GitPluginSettings;
   git: Git;
 
-  get initModal(): GitInitModal {
-    return new GitInitModal(this.app, (repo: string) => {
+  get initRemoteModal(): GitInitRemote {
+    return new GitInitRemote(this.app, (repo: string) => {
       this.git
-        .initAndAddRemote(repo)
+        .addRemote(repo)
         .then(() => {
           new Notice(`Added remote origin "${repo}"`);
           this.updateRemoteRepository(repo);
@@ -108,7 +108,7 @@ export default class GitPlugin extends Plugin {
     this.addRibbonIcon("git-compare-arrows", "Open git menu", () => {
       new GitMenuModal(
         this.app,
-        this.initModal,
+        this.initRemoteModal,
         this.commitModal,
         this.syncModal
       ).open();
@@ -144,7 +144,7 @@ export default class GitPlugin extends Plugin {
       callback: () => {
         new GitMenuModal(
           this.app,
-          this.initModal,
+          this.initRemoteModal,
           this.commitModal,
           this.syncModal
         ).open();
@@ -159,7 +159,7 @@ export default class GitPlugin extends Plugin {
       checkCallback: (checking: boolean) => {
         if (!this.settings.gitRemote) {
           if (!checking) {
-            this.initModal.open();
+            this.initRemoteModal.open();
           }
 
           return true;

@@ -36,8 +36,15 @@ export class Git {
     this.instance = simpleGit({
       ...DEFAULT_GIT_OPTIONS,
       baseDir,
-    });
-    this.instance.status().then((status) => (this.branch = status.current));
+    }).init();
+    this.instance
+      .status()
+      .then((status) => {
+        this.branch = status.current;
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
 
   getBranch(): string | null {
@@ -63,7 +70,7 @@ export class Git {
     return this.instance.add("*").commit(msg);
   }
 
-  initAndAddRemote(repo: string): Response<string> {
+  addRemote(repo: string): Response<string> {
     return this.instance.init().addRemote("origin", repo);
   }
 
