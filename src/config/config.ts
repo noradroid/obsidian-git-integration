@@ -4,4 +4,4 @@ export const DEFAULT_SETTINGS: GitPluginSettings = {
   gitRemote: null,
 };
 
-export const IS_DEBUG_MODE = true;
+export const IS_DEBUG_MODE = false;
