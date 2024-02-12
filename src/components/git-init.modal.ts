@@ -17,15 +17,22 @@ export class GitInitRemote extends Modal {
 
     new Setting(contentEl)
       .setName("Remote repository url")
-      .addText((text) => text.onChange((value) => (this.repo = value)));
+      .addText((text) =>
+        text
+          .setPlaceholder("Enter repository url...")
+          .onChange((value) => (this.repo = value))
+      );
 
     new Setting(contentEl).addButton((btn) =>
-      btn.setButtonText("Initialize").onClick(() => {
-        if (this.repo) {
-          this.addRemote = true;
-          this.close();
-        }
-      })
+      btn
+        .setButtonText("Initialize")
+        .setClass("bg-theme")
+        .onClick(() => {
+          if (this.repo) {
+            this.addRemote = true;
+            this.close();
+          }
+        })
     );
   }
 
