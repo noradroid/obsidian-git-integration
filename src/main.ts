@@ -198,13 +198,7 @@ export default class GitPlugin extends Plugin {
   }
 
   addSettingsPage(): void {
-    this.addSettingTab(
-      new SettingsTab(this.app, this, () => {
-        if (this.settings.gitRemote) {
-          this.git.addRemote(this.settings.gitRemote);
-        }
-      })
-    );
+    this.addSettingTab(new SettingsTab(this.app, this));
   }
 
   openDebugModal(
