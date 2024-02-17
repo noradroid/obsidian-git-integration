@@ -78,14 +78,7 @@ export class GitCommitModal extends Modal {
     checkboxContainer.appendChild(checkbox);
     checkboxContainer.appendChild(checkboxText);
 
-    const buttonsSettingItemControlEl: HTMLDivElement = buttons.settingEl
-      .getElementsByClassName("setting-item-control")
-      .item(0) as HTMLDivElement;
-
-    buttonsSettingItemControlEl.insertAdjacentElement(
-      "afterbegin",
-      checkboxContainer
-    );
+    buttons.controlEl.insertAdjacentElement("afterbegin", checkboxContainer);
   }
 
   onClose() {
