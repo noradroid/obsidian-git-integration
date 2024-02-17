@@ -1,5 +1,5 @@
 import { Notice, Plugin } from "obsidian";
-import { CommitResult } from "simple-git";
+import { CommitResult, PushResult } from "simple-git";
 import { GitCommitModal } from "./components/git-commit.modal";
 import { GitInitRemote } from "./components/git-init.modal";
 import { GitMenuModal } from "./components/git-menu.modal";
@@ -41,17 +41,34 @@ export default class GitPlugin extends Plugin {
   }
 
   get commitModal(): GitCommitModal {
-    return new GitCommitModal(this.app, (msg: string) => {
-      this.git
-        .addAllAndCommit(msg)
-        .then((res: CommitResult) => {
-          if (res.commit) {
-            new Notice(`Committed "${msg}"`);
-          } else {
-            new Notice(`No changes to commit`);
-          }
-        })
-        .catch((err) => new Notice(err));
+    return new GitCommitModal(this.app, (msg: string, sync: boolean) => {
+      if (sync) {
+        this.git
+          .addAllAndCommitAndPush(msg)
+          .then((res: PushResult | null) => {
+            if (
+              res &&
+              (res.update ||
+                (res.pushed.length > 0 && res.pushed[0].new === true))
+            ) {
+              new Notice(`Committed and pushed new changes to remote branch`);
+            } else {
+              new Notice(`No changes to commit`);
+            }
+          })
+          .catch((err) => new Notice(err));
+      } else {
+        this.git
+          .addAllAndCommit(msg)
+          .then((res: CommitResult) => {
+            if (res.commit) {
+              new Notice(`Committed "${msg}"`);
+            } else {
+              new Notice(`No changes to commit`);
+            }
+          })
+          .catch((err) => new Notice(err));
+      }
     });
   }
 
@@ -61,7 +78,7 @@ export default class GitPlugin extends Plugin {
       this.git
         .push()
         .then((res) => {
-          console.log(res);
+          // console.log(res);
           if (
             res.update ||
             (res.pushed.length > 0 && res.pushed[0].new === true)

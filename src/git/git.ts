@@ -66,14 +66,32 @@ export class Git {
     }
   }
 
+  addRemote(repo: string): Promise<string> {
+    return this.getRemote()
+      .then((remote) => {
+        if (remote !== null) {
+          this.instance.removeRemote(this.REMOTE_NAME);
+        }
+      })
+      .then(() => this.instance.addRemote(this.REMOTE_NAME, repo));
+  }
+
   addAllAndCommit(msg: string): Response<CommitResult> {
     return this.instance.add("*").commit(msg);
   }
 
-  addRemote(repo: string): Response<string> {
-    return this.instance
-      .removeRemote(this.REMOTE_NAME)
-      .addRemote(this.REMOTE_NAME, repo);
+  addAllAndCommitAndPush(msg: string): Promise<PushResult | null> {
+    return this.addAllAndCommit(msg)
+      .then((res: CommitResult) => {
+        if (res.commit) {
+          return this.push();
+        } else {
+          return null;
+        }
+      })
+      .catch((err: GitResponseError<PushDetail>) => {
+        throw new Error(err.message);
+      });
   }
 
   pull(): Promise<void | PullResult> {
