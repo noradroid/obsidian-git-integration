@@ -1,5 +1,5 @@
 import { Notice, Plugin } from "obsidian";
-import { CommitResult } from "simple-git";
+import { CommitResult, PushResult } from "simple-git";
 import { GitCommitModal } from "./components/git-commit.modal";
 import { GitInitRemote } from "./components/git-init.modal";
 import { GitMenuModal } from "./components/git-menu.modal";
@@ -41,17 +41,34 @@ export default class GitPlugin extends Plugin {
   }
 
   get commitModal(): GitCommitModal {
-    return new GitCommitModal(this.app, (msg: string) => {
-      this.git
-        .addAllAndCommit(msg)
-        .then((res: CommitResult) => {
-          if (res.commit) {
-            new Notice(`Committed "${msg}"`);
-          } else {
-            new Notice(`No changes to commit`);
-          }
-        })
-        .catch((err) => new Notice(err));
+    return new GitCommitModal(this.app, (msg: string, sync: boolean) => {
+      if (sync) {
+        this.git
+          .addAllAndCommitAndPush(msg)
+          .then((res: PushResult | null) => {
+            if (
+              res &&
+              (res.update ||
+                (res.pushed.length > 0 && res.pushed[0].new === true))
+            ) {
+              new Notice(`Committed and pushed new changes to remote branch`);
+            } else {
+              new Notice(`No changes to commit`);
+            }
+          })
+          .catch((err) => new Notice(err));
+      } else {
+        this.git
+          .addAllAndCommit(msg)
+          .then((res: CommitResult) => {
+            if (res.commit) {
+              new Notice(`Committed "${msg}"`);
+            } else {
+              new Notice(`No changes to commit`);
+            }
+          })
+          .catch((err) => new Notice(err));
+      }
     });
   }
 
@@ -61,7 +78,7 @@ export default class GitPlugin extends Plugin {
       this.git
         .push()
         .then((res) => {
-          console.log(res);
+          // console.log(res);
           if (
             res.update ||
             (res.pushed.length > 0 && res.pushed[0].new === true)
@@ -105,12 +122,6 @@ export default class GitPlugin extends Plugin {
         this.addOpenFolderRibbonIcon();
         this.addDeleteGitFolderRibbonIcon();
       }
-
-      // If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-      // Using this function will automatically remove the event listener when this plugin is disabled.
-      this.registerDomEvent(document, "click", (evt: MouseEvent) => {
-        console.log("click", evt);
-      });
     } catch (err) {
       this.openDebugModal(err, "ERROR");
       new Notice(err);
@@ -123,42 +134,10 @@ export default class GitPlugin extends Plugin {
     });
   }
 
-  // addCommitRibbonIcon(): void {
-  // 	const ribbonIconEl = this.addRibbonIcon(
-  // 		"git-commit-vertical",
-  // 		"Git commit",
-  // 		(evt: MouseEvent) => {
-  // 			new GitCommitModal(this.app).open();
-  // 		}
-  // 	);
-  // 	ribbonIconEl.addClass("my-plugin-ribbon-class");
-  // }
-
-  // addSyncRibbonIcon(): void {
-  // 	const ribbonIconEl = this.addRibbonIcon(
-  // 		"git-compare-arrows",
-  // 		"Git sync",
-  // 		(evt: MouseEvent) => {
-  // 			new GitSyncModal(this.app).open();
-  // 		}
-  // 	);
-  // 	ribbonIconEl.addClass("my-plugin-ribbon-class");
-  // }
-
-  addOpenMenuCommand(): void {
-    this.addCommand({
-      id: "git-menu",
-      name: "Open git menu",
-      callback: () => {
-        this.menuModal.open();
-      },
-    });
-  }
-
   addOpenInitModalCommand(): void {
     this.addCommand({
-      id: "git-init",
-      name: "Open init repository modal",
+      id: "init",
+      name: "Init repository",
       checkCallback: (checking: boolean) => {
         if (!this.settings.gitRemote) {
           if (!checking) {
@@ -173,8 +152,8 @@ export default class GitPlugin extends Plugin {
 
   addOpenCommitModalCommand(): void {
     this.addCommand({
-      id: "git-commit",
-      name: "Open commit changes modal",
+      id: "commit",
+      name: "Commit changes",
       callback: () => {
         this.commitModal.open();
       },
@@ -183,7 +162,7 @@ export default class GitPlugin extends Plugin {
 
   addSyncCommand(): void {
     this.addCommand({
-      id: "git-sync",
+      id: "sync",
       name: "Sync with remote repository",
       callback: () => {
         this.syncModal.open();
@@ -194,7 +173,7 @@ export default class GitPlugin extends Plugin {
   addStatusBarIndication(): void {
     // This adds a status bar item to the bottom of the app. Does not work on mobile apps.
     const statusBarItemEl = this.addStatusBarItem();
-    statusBarItemEl.setText("Git Integration Active");
+    statusBarItemEl.setText("Git integration active");
   }
 
   addSettingsPage(): void {

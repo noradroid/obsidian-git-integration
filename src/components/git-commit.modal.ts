@@ -9,9 +9,13 @@ import {
 export class GitCommitModal extends Modal {
   msg: string;
   commit: boolean = false;
-  onCompleteCallback: (msg: string) => void;
+  sync: boolean = false;
+  onCompleteCallback: (msg: string, sync: boolean) => void;
 
-  constructor(app: App, onCompleteCallback: (msg: string) => void) {
+  constructor(
+    app: App,
+    onCompleteCallback: (msg: string, sync: boolean) => void
+  ) {
     super(app);
     this.onCompleteCallback = onCompleteCallback;
   }
@@ -29,7 +33,7 @@ export class GitCommitModal extends Modal {
       })
       .setClass("modal-setting-item-w-text-area");
 
-    new Setting(contentEl)
+    const buttons = new Setting(contentEl)
       .addButton((btn: ButtonComponent) =>
         btn.setButtonText("Cancel").onClick(() => {
           this.close();
@@ -46,13 +50,42 @@ export class GitCommitModal extends Modal {
             }
           })
       );
+
+    // setup sync checkbox
+    const checkboxContainer: HTMLDivElement = contentEl.createDiv({
+      cls: "checkbox-container-w-text",
+    });
+
+    const checkbox: HTMLInputElement = contentEl.createEl("input", {
+      type: "checkbox",
+      attr: {
+        id: "sync-checkbox",
+      },
+    });
+
+    checkbox.addEventListener("change", () => {
+      this.sync = checkbox.checked;
+    });
+
+    const checkboxText: HTMLLabelElement = contentEl.createEl("label", {
+      text: "Automatically push to remote repository",
+      cls: "font-small",
+      attr: {
+        for: "sync-checkbox",
+      },
+    });
+
+    checkboxContainer.appendChild(checkbox);
+    checkboxContainer.appendChild(checkboxText);
+
+    buttons.controlEl.insertAdjacentElement("afterbegin", checkboxContainer);
   }
 
   onClose() {
     const { contentEl } = this;
     contentEl.empty();
     if (this.commit) {
-      this.onCompleteCallback(this.msg);
+      this.onCompleteCallback(this.msg, this.sync);
     }
   }
 }
