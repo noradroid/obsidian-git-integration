@@ -113,8 +113,11 @@ export class Git {
   }
 
   getLatestCommitMsg(): Promise<string | null> {
-    return this.instance.log().then((log) => {
-      return log.latest?.message ?? null;
-    });
+    return this.instance
+      .log()
+      .then((log) => {
+        return log.latest?.message ?? null;
+      })
+      .catch(() => null);
   }
 }
