@@ -56,7 +56,7 @@ export default class GitPlugin extends Plugin {
                   (res.pushed.length > 0 && res.pushed[0].new === true))
               ) {
                 new Notice(`Committed and pushed new changes to remote branch`);
-                this.latestCommitMsg = msg;
+                this.latestCommitMsg = msg.split("\n")[0];
               } else {
                 new Notice(`No changes to commit`);
               }
@@ -67,8 +67,8 @@ export default class GitPlugin extends Plugin {
             .addAllAndCommit(msg)
             .then((res: CommitResult) => {
               if (res.commit) {
-                new Notice(`Committed "${msg}"`);
-                this.latestCommitMsg = msg;
+                new Notice(`Committed "${msg.split("\n")[0]}"`);
+                this.latestCommitMsg = msg.split("\n")[0];
               } else {
                 new Notice(`No changes to commit`);
               }
@@ -85,7 +85,6 @@ export default class GitPlugin extends Plugin {
       this.git
         .push()
         .then((res) => {
-          // console.log(res);
           if (
             res.update ||
             (res.pushed.length > 0 && res.pushed[0].new === true)
