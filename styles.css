@@ -6,6 +6,11 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+.setting-item-no-top-border {
+  border-top: none;
+}
+
 .setting-item-without-info {
   border-top: none;
   .setting-item-info {
@@ -41,4 +46,30 @@ If your plugin does not need CSS, delete this file.
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.prev-commit-container {
+  display: block;
+}
+
+.prev-commit-container .setting-item-name {
+  padding-bottom: 0.75em;
+}
+
+.copy-container {
+  border: var(--input-border-width) solid var(--background-modifier-border);
+  border-radius: var(--input-radius);
+  padding: var(--size-4-1) var(--size-4-2);
+  background: var(--background-modifier-form-field);
+  color: var(--text-normal);
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+}
+
+.copy-container .msg {
+  padding: var(--size-2-2);
+  overflow: scroll;
+  max-height: 80px;
 }

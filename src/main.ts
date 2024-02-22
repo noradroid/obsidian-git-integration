@@ -18,6 +18,7 @@ import { getVaultPath } from "./utils/utils";
 export default class GitPlugin extends Plugin {
   settings: GitPluginSettings;
   git: Git;
+  latestCommitMsg: string | null = null;
 
   get menuModal(): GitMenuModal {
     return new GitMenuModal(
@@ -41,35 +42,41 @@ export default class GitPlugin extends Plugin {
   }
 
   get commitModal(): GitCommitModal {
-    return new GitCommitModal(this.app, (msg: string, sync: boolean) => {
-      if (sync) {
-        this.git
-          .addAllAndCommitAndPush(msg)
-          .then((res: PushResult | null) => {
-            if (
-              res &&
-              (res.update ||
-                (res.pushed.length > 0 && res.pushed[0].new === true))
-            ) {
-              new Notice(`Committed and pushed new changes to remote branch`);
-            } else {
-              new Notice(`No changes to commit`);
-            }
-          })
-          .catch((err) => new Notice(err));
-      } else {
-        this.git
-          .addAllAndCommit(msg)
-          .then((res: CommitResult) => {
-            if (res.commit) {
-              new Notice(`Committed "${msg}"`);
-            } else {
-              new Notice(`No changes to commit`);
-            }
-          })
-          .catch((err) => new Notice(err));
+    return new GitCommitModal(
+      this.app,
+      this.latestCommitMsg,
+      (msg: string, sync: boolean) => {
+        if (sync) {
+          this.git
+            .addAllAndCommitAndPush(msg)
+            .then((res: PushResult | null) => {
+              if (
+                res &&
+                (res.update ||
+                  (res.pushed.length > 0 && res.pushed[0].new === true))
+              ) {
+                new Notice(`Committed and pushed new changes to remote branch`);
+                this.latestCommitMsg = msg;
+              } else {
+                new Notice(`No changes to commit`);
+              }
+            })
+            .catch((err) => new Notice(err));
+        } else {
+          this.git
+            .addAllAndCommit(msg)
+            .then((res: CommitResult) => {
+              if (res.commit) {
+                new Notice(`Committed "${msg}"`);
+                this.latestCommitMsg = msg;
+              } else {
+                new Notice(`No changes to commit`);
+              }
+            })
+            .catch((err) => new Notice(err));
+        }
       }
-    });
+    );
   }
 
   get syncModal(): GitSyncModal {
@@ -232,6 +239,8 @@ export default class GitPlugin extends Plugin {
     if (gitRemote && !this.settings.gitRemote) {
       this.updateRemoteRepository(gitRemote);
     }
+
+    this.latestCommitMsg = await this.git.getLatestCommitMsg();
   }
 
   async saveSettings() {

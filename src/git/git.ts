@@ -111,4 +111,10 @@ export class Git {
         throw new Error(err.message);
       });
   }
+
+  getLatestCommitMsg(): Promise<string | null> {
+    return this.instance.log().then((log) => {
+      return log.latest?.message ?? null;
+    });
+  }
 }
