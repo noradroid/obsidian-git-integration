@@ -33,7 +33,9 @@ export class GitCommitModal extends Modal {
 
     new Setting(contentEl)
       .setName("Commit message")
-      .setClass(this.prevCommitMsg ? "setting-item-no-top-border" : "")
+      .setClass(
+        this.prevCommitMsg ? "setting-item-no-top-border" : "setting-item"
+      )
       .addTextArea((comp: TextAreaComponent) => {
         comp.setPlaceholder("Enter commit message...");
         comp.onChange((value) => (this.msg = value));
