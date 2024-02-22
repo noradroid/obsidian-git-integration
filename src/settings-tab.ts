@@ -1,5 +1,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import GitPlugin from "src/main";
+import { openFolder } from "./debug/utils/open-folder";
+import { getVaultPath } from "./utils/utils";
 
 export class SettingsTab extends PluginSettingTab {
   plugin: GitPlugin;
@@ -31,5 +33,17 @@ export class SettingsTab extends PluginSettingTab {
             }
           })
       );
+
+    new Setting(containerEl)
+      .setName("File explorer")
+      .setDesc("Open folder in file explorer")
+      .addButton((btn) => {
+        btn
+          .setButtonText("Open")
+          .setClass("bg-theme")
+          .onClick(() => {
+            openFolder(getVaultPath(this.app));
+          });
+      });
   }
 }

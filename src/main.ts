@@ -7,10 +7,7 @@ import { GitSyncModal } from "./components/git-sync.modal";
 import { DEFAULT_SETTINGS, IS_DEBUG_MODE } from "./config/config";
 import { GitPluginSettings } from "./config/plugin-settings.model";
 import { DebugModal } from "./debug/debug.modal";
-import { DeleteGitFolderModal } from "./debug/delete-git-folder.modal";
 import { ErrorModal } from "./debug/error.modal";
-import { deleteGitFolder } from "./debug/utils/delete-folder";
-import { openFolder } from "./debug/utils/open-folder";
 import { Git } from "./git/git";
 import { SettingsTab } from "./settings-tab";
 import { getVaultPath } from "./utils/utils";
@@ -123,11 +120,6 @@ export default class GitPlugin extends Plugin {
       this.addSyncCommand();
       this.addOpenCommitModalCommand();
       this.addStatusBarIndication();
-
-      if (IS_DEBUG_MODE) {
-        this.addOpenFolderRibbonIcon();
-        this.addDeleteGitFolderRibbonIcon();
-      }
     } catch (err) {
       this.openDebugModal(err, "ERROR");
       new Notice(err);
@@ -201,27 +193,6 @@ export default class GitPlugin extends Plugin {
         }
       }
     }
-  }
-
-  /**
-   * Open vault base folder.
-   */
-  addOpenFolderRibbonIcon(): void {
-    this.addRibbonIcon("folder-open", "Open folder in file explorer", () => {
-      openFolder(getVaultPath(this.app));
-    });
-  }
-
-  /**
-   * Delete .git folder
-   */
-  addDeleteGitFolderRibbonIcon(): void {
-    this.addRibbonIcon("trash", "Delete .git folder", () => {
-      new DeleteGitFolderModal(this.app, () => {
-        deleteGitFolder(getVaultPath(this.app));
-        this.updateRemoteRepository();
-      }).open();
-    });
   }
 
   updateRemoteRepository(repo?: string | null): void {
